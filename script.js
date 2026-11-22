@@ -67,6 +67,7 @@
   var catFoot = document.getElementById('pm-cat-foot');
   var backBtn = catModal ? catModal.querySelector('[data-back]') : null;
   var catViews = catModal ? Array.prototype.slice.call(catModal.querySelectorAll('.pm-view')) : [];
+  var currentCatView = null;
 
   /* 1단계(현장 목록) / 2단계(현장 사진) 뷰 전환 */
   function showCatView(id) {
@@ -81,6 +82,7 @@
     if (catSummary) catSummary.textContent = view.dataset.summary || '';
     if (catFoot) catFoot.textContent = view.dataset.foot || '';
     if (backBtn) backBtn.hidden = view.dataset.level !== 'detail';
+    currentCatView = view;
     catBody.scrollTop = 0;
 
     // 바뀐 뷰의 첫 조작 지점으로 초점 이동
@@ -139,8 +141,7 @@
       }
       var back = e.target.closest('[data-back]');
       if (back) {
-        var view = back.closest('.pm-view');
-        showCatView(view && view.dataset.parent ? view.dataset.parent : 'cv-fitness');
+        showCatView(currentCatView && currentCatView.dataset.parent ? currentCatView.dataset.parent : 'cv-fitness');
         return;
       }
       if (e.target.closest('[data-close]')) {
