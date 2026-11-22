@@ -52,11 +52,43 @@
     reveals.forEach(function (el) { el.classList.add('in-view'); });
   }
 
-  /* ---------- portfolio: 현장별 갤러리 모달 ---------- */
+  /* ---------- portfolio: 카테고리 → 현장 갤러리 모달 ---------- */
   var openers = Array.prototype.slice.call(document.querySelectorAll('[data-open]'));
   var modals = Array.prototype.slice.call(document.querySelectorAll('.pmodal'));
   var activeModal = null;
   var lastFocus = null;
+
+  var catModal = document.getElementById('pm-cat');
+  var catBody = catModal ? catModal.querySelector('.pm-body') : null;
+  var catEyebrow = document.getElementById('pm-cat-cat');
+  var catTitle = document.getElementById('pm-cat-title');
+  var catCount = document.getElementById('pm-cat-count');
+  var catSummary = document.getElementById('pm-cat-summary');
+  var catFoot = document.getElementById('pm-cat-foot');
+  var backBtn = catModal ? catModal.querySelector('[data-back]') : null;
+  var catViews = catModal ? Array.prototype.slice.call(catModal.querySelectorAll('.pm-view')) : [];
+
+  /* 1단계(현장 목록) / 2단계(현장 사진) 뷰 전환 */
+  function showCatView(id) {
+    var view = id ? document.getElementById(id) : null;
+    if (!view || !catBody) return;
+    catViews.forEach(function (v) {
+      v.classList.toggle('is-active', v === view);
+    });
+    if (catEyebrow) catEyebrow.textContent = view.dataset.eyebrow || '';
+    if (catTitle) catTitle.textContent = view.dataset.title || '';
+    if (catCount) catCount.textContent = view.dataset.count || '';
+    if (catSummary) catSummary.textContent = view.dataset.summary || '';
+    if (catFoot) catFoot.textContent = view.dataset.foot || '';
+    if (backBtn) backBtn.hidden = view.dataset.level !== 'detail';
+    catBody.scrollTop = 0;
+
+    // 바뀐 뷰의 첫 조작 지점으로 초점 이동
+    var target = view.dataset.level === 'detail'
+      ? backBtn
+      : view.querySelector('.pm-site');
+    if (target) target.focus({ preventScroll: true });
+  }
 
   function focusables(scope) {
     return Array.prototype.slice.call(
@@ -92,12 +124,25 @@
 
   openers.forEach(function (btn) {
     btn.addEventListener('click', function () {
-      openModal(document.getElementById(btn.dataset.open), btn);
+      var modal = document.getElementById(btn.dataset.open);
+      openModal(modal, btn);
+      if (modal && modal === catModal) showCatView(btn.dataset.view || 'cv-fitness');
     });
   });
 
   modals.forEach(function (modal) {
     modal.addEventListener('click', function (e) {
+      var goto = e.target.closest('[data-goto]');
+      if (goto) {
+        showCatView(goto.dataset.goto);
+        return;
+      }
+      var back = e.target.closest('[data-back]');
+      if (back) {
+        var view = back.closest('.pm-view');
+        showCatView(view && view.dataset.parent ? view.dataset.parent : 'cv-fitness');
+        return;
+      }
       if (e.target.closest('[data-close]')) {
         closeModal();
         return;
