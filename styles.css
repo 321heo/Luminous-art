@@ -515,8 +515,16 @@ ul,ol{padding:0;list-style:none}
 .pm-body{
   flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;
   -webkit-overflow-scrolling:touch;
+  scrollbar-width:thin;scrollbar-color:rgba(20,21,24,.2) transparent;
   padding:clamp(18px,2.6vw,30px) clamp(16px,3vw,36px) clamp(26px,3vw,38px);
 }
+.pm-body::-webkit-scrollbar{width:9px}
+.pm-body::-webkit-scrollbar-track{background:transparent}
+.pm-body::-webkit-scrollbar-thumb{
+  background:rgba(20,21,24,.16);border-radius:9px;
+  border:3px solid var(--paper);
+}
+.pm-body::-webkit-scrollbar-thumb:hover{background:rgba(20,21,24,.32)}
 .pm-lead{
   max-width:760px;margin:0 auto clamp(20px,2.6vw,30px);
   padding-bottom:clamp(16px,2vw,22px);border-bottom:1px solid var(--line-soft);
