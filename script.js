@@ -5,9 +5,7 @@
   var header = document.getElementById('header');
   var burger = document.getElementById('burger');
   var nav = document.getElementById('nav');
-  var gallery = document.getElementById('gallery');
-  var cards = Array.prototype.slice.call(document.querySelectorAll('.g-card'));
-  var visible = cards.slice();
+  var projects = document.getElementById('projects');
 
   /* ---------- header state ---------- */
   function onScroll() {
@@ -54,125 +52,85 @@
     reveals.forEach(function (el) { el.classList.add('in-view'); });
   }
 
-  /* ---------- portfolio filter ---------- */
-  var chips = Array.prototype.slice.call(document.querySelectorAll('.chip'));
-  function applyFilter(cat) {
-    visible = [];
-    cards.forEach(function (card) {
-      var show = cat === 'all' || card.dataset.cat === cat;
-      card.classList.toggle('is-hidden', !show);
-      if (show) visible.push(card);
-    });
-  }
-  chips.forEach(function (chip) {
-    chip.addEventListener('click', function () {
-      chips.forEach(function (c) {
-        c.classList.toggle('is-active', c === chip);
-        c.setAttribute('aria-pressed', c === chip ? 'true' : 'false');
-      });
-      applyFilter(chip.dataset.filter);
-    });
-  });
-
-  /* ---------- lightbox ---------- */
-  var lb = document.getElementById('lightbox');
-  var lbImg = document.getElementById('lbImg');
-  var lbTitle = document.getElementById('lbTitle');
-  var lbDesc = document.getElementById('lbDesc');
-  var lbCount = document.getElementById('lbCount');
-  var lbClose = document.getElementById('lbClose');
-  var lbPrev = document.getElementById('lbPrev');
-  var lbNext = document.getElementById('lbNext');
-  var index = 0;
+  /* ---------- portfolio: 현장별 갤러리 모달 ---------- */
+  var openers = Array.prototype.slice.call(document.querySelectorAll('[data-open]'));
+  var modals = Array.prototype.slice.call(document.querySelectorAll('.pmodal'));
+  var activeModal = null;
   var lastFocus = null;
 
-  function pad(n) { return (n < 10 ? '0' : '') + n; }
-
-  function render() {
-    var card = visible[index];
-    if (!card) return;
-    var img = card.querySelector('img');
-    lbImg.src = card.dataset.src;
-    lbImg.alt = img ? img.alt : card.dataset.title;
-    lbTitle.textContent = card.dataset.title;
-    lbDesc.textContent = card.dataset.desc || '';
-    lbCount.textContent = pad(index + 1) + ' / ' + pad(visible.length);
-    var single = visible.length < 2;
-    lbPrev.style.visibility = single ? 'hidden' : 'visible';
-    lbNext.style.visibility = single ? 'hidden' : 'visible';
+  function focusables(scope) {
+    return Array.prototype.slice.call(
+      scope.querySelectorAll('button, [href], input, [tabindex]:not([tabindex="-1"])')
+    );
   }
 
-  function openLb(card) {
-    index = visible.indexOf(card);
-    if (index < 0) index = 0;
-    lastFocus = card;
-    render();
-    lb.hidden = false;
-    // force reflow so the opacity transition runs
-    void lb.offsetWidth;
-    lb.classList.add('is-open');
+  function openModal(modal, trigger) {
+    if (!modal) return;
+    lastFocus = trigger || null;
+    modal.hidden = false;
+    void modal.offsetWidth; // let the open transition run
+    modal.classList.add('is-open');
     document.body.classList.add('is-locked');
-    lbClose.focus();
+    activeModal = modal;
+    var body = modal.querySelector('.pm-body');
+    if (body) body.scrollTop = 0;
+    var first = modal.querySelector('.pm-close');
+    if (first) first.focus({ preventScroll: true });
   }
 
-  function closeLb() {
-    lb.classList.remove('is-open');
+  function closeModal() {
+    if (!activeModal) return;
+    var modal = activeModal;
+    activeModal = null;
+    modal.classList.remove('is-open');
     document.body.classList.remove('is-locked');
     window.setTimeout(function () {
-      lb.hidden = true;
-      lbImg.removeAttribute('src');
-    }, 300);
-    if (lastFocus) lastFocus.focus();
+      modal.hidden = true;
+    }, 320);
+    if (lastFocus) lastFocus.focus({ preventScroll: true });
   }
 
-  function go(step) {
-    if (visible.length < 2) return;
-    index = (index + step + visible.length) % visible.length;
-    render();
-  }
-
-  cards.forEach(function (card) {
-    card.setAttribute('tabindex', '0');
-    card.setAttribute('role', 'button');
-    card.setAttribute('aria-label', (card.dataset.title || '사진') + ' 크게 보기');
-    card.addEventListener('click', function () { openLb(card); });
-    card.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        openLb(card);
-      }
+  openers.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      openModal(document.getElementById(btn.dataset.open), btn);
     });
   });
 
-  lbClose.addEventListener('click', closeLb);
-  lbPrev.addEventListener('click', function () { go(-1); });
-  lbNext.addEventListener('click', function () { go(1); });
-  lb.addEventListener('click', function (e) {
-    if (e.target === lb) closeLb();
+  modals.forEach(function (modal) {
+    modal.addEventListener('click', function (e) {
+      if (e.target.closest('[data-close]')) {
+        closeModal();
+        return;
+      }
+      // 바깥(어두운 배경) 클릭으로 닫기
+      if (!e.target.closest('.pmodal-sheet')) closeModal();
+    });
   });
 
-  /* swipe on touch devices */
-  var touchX = null;
-  lb.addEventListener('touchstart', function (e) {
-    touchX = e.changedTouches[0].clientX;
-  }, { passive: true });
-  lb.addEventListener('touchend', function (e) {
-    if (touchX === null) return;
-    var dx = e.changedTouches[0].clientX - touchX;
-    touchX = null;
-    if (Math.abs(dx) > 45) go(dx < 0 ? 1 : -1);
-  }, { passive: true });
-
   document.addEventListener('keydown', function (e) {
-    if (lb.hidden) {
-      if (e.key === 'Escape' && nav.classList.contains('is-open')) setMenu(false);
+    if (activeModal) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        closeModal();
+      } else if (e.key === 'Tab') {
+        // 모달 안에서 초점이 돌도록
+        var items = focusables(activeModal);
+        if (!items.length) return;
+        var firstItem = items[0];
+        var lastItem = items[items.length - 1];
+        if (e.shiftKey && document.activeElement === firstItem) {
+          e.preventDefault();
+          lastItem.focus();
+        } else if (!e.shiftKey && document.activeElement === lastItem) {
+          e.preventDefault();
+          firstItem.focus();
+        }
+      }
       return;
     }
-    if (e.key === 'Escape') closeLb();
-    else if (e.key === 'ArrowLeft') go(-1);
-    else if (e.key === 'ArrowRight') go(1);
+    if (e.key === 'Escape' && nav.classList.contains('is-open')) setMenu(false);
   });
 
   /* ---------- sanity ---------- */
-  if (gallery && !cards.length) console.warn('portfolio cards not found');
+  if (projects && !openers.length) console.warn('portfolio projects not found');
 })();
