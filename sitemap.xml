@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://321heo.github.io/Luminous-art/</loc>
+    <lastmod>2026-11-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://321heo.github.io/Luminous-art/assets/og-image.jpg</image:loc>
+      <image:title>루미너스아트 상업공간 페인트·스페셜도장 시공</image:title>
+    </image:image>
+  </url>
+</urlset>
